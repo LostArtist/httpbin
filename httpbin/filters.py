@@ -7,16 +7,13 @@ This module provides response filter decorators.
 
 import gzip as gzip2
 import zlib
-
-import brotli as _brotli
-
-from six import BytesIO
 from decimal import Decimal
 from time import time as now
 
+import brotli as _brotli
 from decorator import decorator
 from flask import Flask, Response
-
+from six import BytesIO
 
 app = Flask(__name__)
 
@@ -28,7 +25,7 @@ def x_runtime(f, *args, **kwargs):
     _t0 = now()
     r = f(*args, **kwargs)
     _t1 = now()
-    r.headers['X-Runtime'] = f'{0}s: {Decimal(str(_t1 - _t0))}'
+    r.headers["X-Runtime"] = f"{0}s: {Decimal(str(_t1 - _t0))}"
 
     return r
 
@@ -45,11 +42,7 @@ def gzip(f, *args, **kwargs):
         content = data
 
     gzip_buffer = BytesIO()
-    gzip_file = gzip2.GzipFile(
-        mode='wb',
-        compresslevel=4,
-        fileobj=gzip_buffer
-    )
+    gzip_file = gzip2.GzipFile(mode="wb", compresslevel=4, fileobj=gzip_buffer)
     gzip_file.write(content)
     gzip_file.close()
 
@@ -57,8 +50,8 @@ def gzip(f, *args, **kwargs):
 
     if isinstance(data, Response):
         data.data = gzip_data
-        data.headers['Content-Encoding'] = 'gzip'
-        data.headers['Content-Length'] = str(len(data.data))
+        data.headers["Content-Encoding"] = "gzip"
+        data.headers["Content-Length"] = str(len(data.data))
 
         return data
 
@@ -82,8 +75,8 @@ def deflate(f, *args, **kwargs):
 
     if isinstance(data, Response):
         data.data = deflated_data
-        data.headers['Content-Encoding'] = 'deflate'
-        data.headers['Content-Length'] = str(len(data.data))
+        data.headers["Content-Encoding"] = "deflate"
+        data.headers["Content-Length"] = str(len(data.data))
 
         return data
 
@@ -105,8 +98,8 @@ def brotli(f, *args, **kwargs):
 
     if isinstance(data, Response):
         data.data = deflated_data
-        data.headers['Content-Encoding'] = 'br'
-        data.headers['Content-Length'] = str(len(data.data))
+        data.headers["Content-Encoding"] = "br"
+        data.headers["Content-Length"] = str(len(data.data))
 
         return data
 

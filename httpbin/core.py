@@ -12,45 +12,45 @@ import os
 import random
 import time
 import uuid
-from flasgger import Swagger, NO_SANITIZER
+
+from flasgger import NO_SANITIZER, Swagger
 from flask import (
     Flask,
     Response,
-    request,
-    render_template,
-    redirect,
-    jsonify as flask_jsonify,
-    make_response,
-    url_for,
     abort,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
+from flask import (
+    jsonify as flask_jsonify,
 )
 from six.moves import range as xrange
 from werkzeug.datastructures import MultiDict
-from werkzeug.http import http_date
-from werkzeug.http import parse_authorization_header
+from werkzeug.http import http_date, parse_authorization_header
 from werkzeug.wrappers import BaseResponse
 
 from . import filters
 from .helpers import (
-    get_headers,
-    status_code,
-    get_dict,
-    get_request_range,
+    ANGRY_ASCII,
+    ROBOT_TXT,
     check_basic_auth,
     check_digest_auth,
-    secure_cookie,
-    ROBOT_TXT,
-    ANGRY_ASCII,
-    parse_multi_value_header,
-    next_stale_after_value,
     digest_challenge_response,
+    get_dict,
+    get_headers,
+    get_request_range,
+    next_stale_after_value,
+    parse_multi_value_header,
+    secure_cookie,
+    status_code,
 )
 from .structures import CaseInsensitiveDict
 from .utils import weighted_choice
 
-with open(
-    os.path.join(os.path.realpath(os.path.dirname(__file__)), "VERSION")
-) as version_file:
+with open(os.path.join(os.path.realpath(os.path.dirname(__file__)), "VERSION")) as version_file:
     version = version_file.read().strip()
 
 ENV_COOKIES = (
@@ -200,7 +200,7 @@ def before_request():
         if server.lower().startswith("gunicorn/"):
             if "wsgi.input_terminated" in request.environ:
                 app.logger.debug(
-                    f"environ wsgi.input_terminated already set, keeping: {request.environ["wsgi.input_terminated"]}"
+                    f"environ wsgi.input_terminated already set, keeping: {request.environ['wsgi.input_terminated']}"
                 )
             else:
                 request.environ["wsgi.input_terminated"] = 1
@@ -216,14 +216,10 @@ def set_cors_headers(response):
     if request.method == "OPTIONS":
         # Both of these headers are only used for the "preflight request"
         # http://www.w3.org/TR/cors/#access-control-allow-methods-response-header
-        response.headers[
-            "Access-Control-Allow-Methods"
-        ] = "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, PATCH, OPTIONS"
         response.headers["Access-Control-Max-Age"] = "3600"  # 1 hour cache
         if request.headers.get("Access-Control-Request-Headers") is not None:
-            response.headers["Access-Control-Allow-Headers"] = request.headers[
-                "Access-Control-Request-Headers"
-            ]
+            response.headers["Access-Control-Allow-Headers"] = request.headers["Access-Control-Request-Headers"]
     return response
 
 
@@ -337,7 +333,7 @@ def view_headers():
         description: The request's headers.
     """
 
-    return jsonify(get_dict('headers'))
+    return jsonify(get_dict("headers"))
 
 
 @app.route("/user-agent")
@@ -419,9 +415,7 @@ def view_post():
         description: The request's POST parameters.
     """
 
-    return jsonify(
-        get_dict("url", "args", "form", "data", "origin", "headers", "files", "json")
-    )
+    return jsonify(get_dict("url", "args", "form", "data", "origin", "headers", "files", "json"))
 
 
 @app.route("/put", methods=("PUT",))
@@ -437,9 +431,7 @@ def view_put():
         description: The request's PUT parameters.
     """
 
-    return jsonify(
-        get_dict("url", "args", "form", "data", "origin", "headers", "files", "json")
-    )
+    return jsonify(get_dict("url", "args", "form", "data", "origin", "headers", "files", "json"))
 
 
 @app.route("/patch", methods=("PATCH",))
@@ -455,9 +447,7 @@ def view_patch():
         description: The request's PATCH parameters.
     """
 
-    return jsonify(
-        get_dict("url", "args", "form", "data", "origin", "headers", "files", "json")
-    )
+    return jsonify(get_dict("url", "args", "form", "data", "origin", "headers", "files", "json"))
 
 
 @app.route("/delete", methods=("DELETE",))
@@ -473,9 +463,7 @@ def view_delete():
         description: The request's DELETE parameters.
     """
 
-    return jsonify(
-        get_dict("url", "args", "form", "data", "origin", "headers", "files", "json")
-    )
+    return jsonify(get_dict("url", "args", "form", "data", "origin", "headers", "files", "json"))
 
 
 @app.route("/gzip")
@@ -559,9 +547,7 @@ def redirect_n_times(n):
 
 
 def _redirect(kind, n, external):
-    return redirect(
-        url_for(f"{0}_redirect_n_times: {kind}", n=n - 1, _external=external)
-    )
+    return redirect(url_for(f"{0}_redirect_n_times: {kind}", n=n - 1, _external=external))
 
 
 @app.route("/redirect-to", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "TRACE"])
@@ -721,9 +707,7 @@ def stream_n_messages(n):
     return Response(generate_stream(), headers={"Content-Type": "application/json"})
 
 
-@app.route(
-    "/status/<codes>", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "TRACE"]
-)
+@app.route("/status/<codes>", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "TRACE"])
 def view_status_code(codes):
     """Return status code or random status code if more than one are given
     ---
@@ -1084,9 +1068,7 @@ def digest_auth_nostale(qop=None, user="user", passwd="passwd", algorithm="MD5")
 
 
 @app.route("/digest-auth/<qop>/<user>/<passwd>/<algorithm>/<stale_after>")
-def digest_auth(
-    qop=None, user="user", passwd="passwd", algorithm="MD5", stale_after="never"
-):
+def digest_auth(qop=None, user="user", passwd="passwd", algorithm="MD5", stale_after="never"):
     """Prompts the user for authorization using Digest Auth + Algorithm.
     allow settings the stale_after argument.
     ---
@@ -1180,9 +1162,7 @@ def digest_auth(
     response = jsonify(authenticated=True, user=user)
     response.set_cookie("fake", value="fake_value")
     if stale_after_value:
-        response.set_cookie(
-            "stale_after", value=next_stale_after_value(stale_after_value)
-        )
+        response.set_cookie("stale_after", value=next_stale_after_value(stale_after_value))
 
     return response
 
@@ -1207,9 +1187,7 @@ def delay_response(delay):
 
     time.sleep(delay)
 
-    return jsonify(
-        get_dict("url", "args", "form", "data", "origin", "headers", "files")
-    )
+    return jsonify(get_dict("url", "args", "form", "data", "origin", "headers", "files"))
 
 
 @app.route("/drip")
@@ -1326,9 +1304,7 @@ def cache():
         description: Modified
 
     """
-    is_conditional = request.headers.get("If-Modified-Since") or request.headers.get(
-        "If-None-Match"
-    )
+    is_conditional = request.headers.get("If-Modified-Since") or request.headers.get("If-None-Match")
 
     if is_conditional is None:
         response = view_get()
@@ -1507,9 +1483,7 @@ def range_request(numbytes):
     """
 
     if numbytes <= 0 or numbytes > (100 * 1024):
-        response = Response(
-            headers={"ETag": "range%d" % numbytes, "Accept-Ranges": "bytes"}
-        )
+        response = Response(headers={"ETag": "range%d" % numbytes, "Accept-Ranges": "bytes"})
         response.status_code = 404
         response.data = "number of bytes must be in the range (0, 102400]"
         return response
@@ -1547,7 +1521,6 @@ def range_request(numbytes):
         chunks = bytearray()
 
         for i in xrange(first_byte_pos, last_byte_pos + 1):
-
             # We don't want the resource to change across requests, so we need
             # to use a predictable data generation function
             chunks.append(ord("a") + (i % 26))
@@ -1721,7 +1694,7 @@ def image_svg():
 def resource(filename):
     path = os.path.join(tmpl_dir, filename)
     with open(path, "rb") as f:
-      return f.read()
+        return f.read()
 
 
 @app.route("/xml")

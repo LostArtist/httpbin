@@ -5,8 +5,8 @@ httpbin.utils
 Utility functions.
 """
 
-import random
 import bisect
+import random
 
 
 def weighted_choice(choices):
