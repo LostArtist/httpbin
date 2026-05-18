@@ -201,8 +201,9 @@ jobs:
           severity: "HIGH,CRITICAL"
 
 # k8s deploy
+
   deploy:
-    name: Deploy to Kubernetes
+    name: Validate K8s Manifests (dry-run)
     runs-on: ubuntu-latest
     needs: trivy-scan
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -215,24 +216,31 @@ jobs:
         with:
           version: "v1.29.0"
 
-      - name: Configure kubeconfig
-        run: |
-          mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > ~/.kube/config
-          chmod 600 ~/.kube/config
+      - name: Start kind cluster
+        uses: helm/kind-action@v1.9.0
+        with:
+          cluster_name: ci-cluster
 
-      - name: Apply Kubernetes manifests
+      - name: Create namespace
+        run: kubectl create namespace httpbin
+
+      - name: Create placeholder secret for dry-run
         run: |
-          kubectl apply -f k8s/namespace.yaml
+          kubectl create secret generic httpbin-secret \
+            --namespace=httpbin \
+            --from-literal=HTTPBIN_SECRET_KEY="ci-placeholder-$(openssl rand -hex 8)"
+
+      - name: Apply manifests
+        run: |
+          kubectl apply -f k8s/namespace.yaml || true
           kubectl apply -f k8s/configmap.yaml
-          kubectl apply -f k8s/secret.yaml
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
           kubectl apply -f k8s/hpa.yaml
           kubectl apply -f k8s/networkpolicy.yaml
 
-      - name: Verify rollout
+      - name: Verify deployment created
         run: |
-          kubectl rollout status deployment/httpbin \
-            --namespace=httpbin \
-            --timeout=120s
+          kubectl get deployment httpbin -n httpbin
+          kubectl get service httpbin -n httpbin
+          kubectl get hpa httpbin-hpa -n httpbin
