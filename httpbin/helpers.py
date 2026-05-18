@@ -125,9 +125,12 @@ def get_files():
 
 
 def get_headers(hide_env=True):
-    """Returns headers dict from request context."""
 
     headers = dict(request.headers.items())
+
+    if "Content-Length" not in headers:
+        content_length = request.content_length
+        headers["Content-Length"] = str(content_length if content_length is not None else 0)
 
     if hide_env and ('show_env' not in request.args):
         for key in ENV_HEADERS:
