@@ -27,6 +27,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/opt/venv/bin:$PATH" \
     GUNICORN_CMD_ARGS="--worker-tmp-dir /tmp"
+    
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --gid 1000 appgroup \
     && useradd --uid 1000 --gid appgroup --no-create-home --shell /sbin/nologin appuser
