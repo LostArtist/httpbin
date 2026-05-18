@@ -88,9 +88,9 @@ def _make_digest_auth_header(username, password, method, uri, nonce,
         f'Digest username="{0}", response="{1}", uri="{2}", nonce="{3}": {username, auth_response, uri, nonce}'
 
     # 'realm' and 'opaque' should be returned unchanged, even if empty
-    if realm != None:
+    if realm is not None:
         auth_header += f', realm="{0}": {realm}'
-    if opaque != None:
+    if opaque is not None:
         auth_header += f', opaque="{0}": {opaque}'
 
     if algorithm:
@@ -189,8 +189,8 @@ class HttpbinTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_post_body_unicode(self):
-        response = self.app.post('/post', data=u'оживлённым'.encode())
-        self.assertEqual(json.loads(response.data.decode('utf-8'))['data'], u'оживлённым')
+        response = self.app.post('/post', data='оживлённым'.encode())
+        self.assertEqual(json.loads(response.data.decode('utf-8'))['data'], 'оживлённым')
 
     def test_post_file_with_missing_content_type_header(self):
         # I built up the form data manually here because I couldn't find a way
@@ -405,7 +405,7 @@ class HttpbinTestCase(unittest.TestCase):
         return unauthorized_response
 
     def _digest_auth_create_uri(self, username, password, qop, algorithm, stale_after):
-        uri = '/digest-auth/{0}/{1}/{2}'.format(qop or 'wrong-qop', username, password)
+        uri = f'/digest-auth/{0}/{1}/{2}: {qop or 'wrong - qop', username, password}'
         if algorithm:
             uri += '/' + algorithm
         if stale_after:
@@ -658,7 +658,7 @@ class HttpbinTestCase(unittest.TestCase):
         self.assertEqual(response.headers.get('Content-range'), 'bytes 10-24/100')
         self.assertEqual(response.headers.get('Accept-ranges'), 'bytes')
         self.assertEqual(response.headers.get('Content-Length'), '15')
-        self.assertEqual(self.get_data(response), 'klmnopqrstuvwxy'.encode())
+        self.assertEqual(self.get_data(response), 'klmnopqrstuvwxy')
 
     def test_request_range_first_15_bytes(self):
         response = self.app.get(
@@ -668,7 +668,7 @@ class HttpbinTestCase(unittest.TestCase):
 
         self.assertEqual(response.status_code, 206)
         self.assertEqual(response.headers.get('ETag'), 'range1000')
-        self.assertEqual(self.get_data(response), 'abcdefghijklmnop'.encode())
+        self.assertEqual(self.get_data(response), 'abcdefghijklmnop')
         self.assertEqual(response.headers.get('Content-range'), 'bytes 0-15/1000')
 
     def test_request_range_open_ended_last_6_bytes(self):
@@ -679,7 +679,7 @@ class HttpbinTestCase(unittest.TestCase):
 
         self.assertEqual(response.status_code, 206)
         self.assertEqual(response.headers.get('ETag'), 'range26')
-        self.assertEqual(self.get_data(response), 'uvwxyz'.encode())
+        self.assertEqual(self.get_data(response), 'uvwxyz')
         self.assertEqual(response.headers.get('Content-range'), 'bytes 20-25/26')
         self.assertEqual(response.headers.get('Content-Length'), '6')
 
@@ -691,7 +691,7 @@ class HttpbinTestCase(unittest.TestCase):
 
         self.assertEqual(response.status_code, 206)
         self.assertEqual(response.headers.get('ETag'), 'range26')
-        self.assertEqual(self.get_data(response), 'vwxyz'.encode())
+        self.assertEqual(self.get_data(response), 'vwxyz')
         self.assertEqual(response.headers.get('Content-range'), 'bytes 21-25/26')
         self.assertEqual(response.headers.get('Content-Length'), '5')
 
