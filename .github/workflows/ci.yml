@@ -186,6 +186,8 @@ jobs:
           cache-to: type=gha,mode=max
           provenance: true
           sbom: true
+          no-cache: false
+          pull: true  
           
       - name: Verify pushed image tags
         run: |
