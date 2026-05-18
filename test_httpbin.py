@@ -406,7 +406,7 @@ class HttpbinTestCase(unittest.TestCase):
         return unauthorized_response
 
     def _digest_auth_create_uri(self, username, password, qop, algorithm, stale_after):
-        uri = f'/digest-auth/{0}/{1}/{2}: {qop or 'wrong - qop', username, password}'
+        uri = f'/digest-auth/{qop or "wrong-qop"}/{username}/{password}'
         if algorithm:
             uri += '/' + algorithm
         if stale_after:

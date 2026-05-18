@@ -543,9 +543,7 @@ def redirect_n_times(n):
 
 
 def _redirect(kind, n, external):
-    return redirect(url_for(f"{0}_redirect_n_times: {kind}", n=n - 1, _external=external))
-
-
+    return redirect(url_for(f"{kind}_redirect_n_times", n=n - 1, _external=external))
 @app.route("/redirect-to", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "TRACE"])
 def redirect_to():
     """302/3XX Redirects to the given URL.
