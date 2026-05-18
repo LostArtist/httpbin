@@ -200,13 +200,12 @@ def before_request():
         if server.lower().startswith("gunicorn/"):
             if "wsgi.input_terminated" in request.environ:
                 app.logger.debug(
-                    "environ wsgi.input_terminated already set, keeping: %s"
-                    % request.environ["wsgi.input_terminated"]
+                    f"environ wsgi.input_terminated already set, keeping: {request.environ["wsgi.input_terminated"]}"
                 )
             else:
                 request.environ["wsgi.input_terminated"] = 1
         else:
-            abort(501, "Chunked requests are not supported for server %s" % server)
+            abort(501, f"Chunked requests are not supported for server: {server}")
 
 
 @app.after_request
@@ -561,7 +560,7 @@ def redirect_n_times(n):
 
 def _redirect(kind, n, external):
     return redirect(
-        url_for("{0}_redirect_n_times".format(kind), n=n - 1, _external=external)
+        url_for(f"{0}_redirect_n_times: {kind}", n=n - 1, _external=external)
     )
 
 
@@ -1395,7 +1394,7 @@ def cache_control(value):
         description: Cache control set
     """
     response = view_get()
-    response.headers["Cache-Control"] = "public, max-age={0}".format(value)
+    response.headers["Cache-Control"] = f"public, max-age={0}: {value}"
     return response
 
 
@@ -1606,7 +1605,7 @@ def link_page(n, offset):
     html = ["<html><head><title>Links</title></head><body>"]
     for i in xrange(n):
         if i == offset:
-            html.append("{0} ".format(i))
+            html.append(f"{0}: {i}")
         else:
             html.append(link.format(url_for("link_page", n=n, offset=i), i))
     html.append("</body></html>")

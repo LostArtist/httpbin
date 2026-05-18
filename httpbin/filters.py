@@ -28,7 +28,7 @@ def x_runtime(f, *args, **kwargs):
     _t0 = now()
     r = f(*args, **kwargs)
     _t1 = now()
-    r.headers['X-Runtime'] = '{0}s'.format(Decimal(str(_t1 - _t0)))
+    r.headers['X-Runtime'] = f'{0}s: {Decimal(str(_t1 - _t0))}'
 
     return r
 

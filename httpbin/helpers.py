@@ -301,7 +301,7 @@ def HA2(credentials, request, algorithm):
     elif credentials.get("qop") == "auth-int":
         for k in 'method', 'uri', 'body':
             if k not in request:
-                raise ValueError("%s required" % k)
+                raise ValueError(f"required: {k}")
         A2 = b":".join([request['method'].encode(),
                         request['uri'].encode(),
                         H(request['body'], algorithm).encode()])
@@ -340,7 +340,7 @@ def response(credentials, password, request):
     elif credentials.get('qop') == 'auth' or credentials.get('qop') == 'auth-int':
         for k in 'nonce', 'nc', 'cnonce', 'qop':
             if k not in credentials:
-                raise ValueError("%s required for response H" % k)
+                raise ValueError(f"required for response H: {k}")
         response = H(b":".join([HA1_value.encode(),
                                credentials.get('nonce').encode(),
                                credentials.get('nc').encode(),
