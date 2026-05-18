@@ -98,7 +98,7 @@ def json_safe(string, content_type='application/octet-stream'):
     except (ValueError, TypeError):
         return b''.join([
             b'data:',
-            content_type.encode('utf-8'),
+            content_type.encode(),
             b';base64,',
             base64.b64encode(string)
         ]).decode('utf-8')
@@ -283,9 +283,9 @@ def HA1(realm, username, password, algorithm):
     """
     if not realm:
         realm = u''
-    return H(b":".join([username.encode('utf-8'),
-                           realm.encode('utf-8'),
-                           password.encode('utf-8')]), algorithm)
+    return H(b":".join([username.encode(),
+                           realm.encode(),
+                           password.encode()]), algorithm)
 
 
 def HA2(credentials, request, algorithm):
@@ -297,14 +297,14 @@ def HA2(credentials, request, algorithm):
         HA2 = md5(A2) = MD5(method:digestURI:MD5(entityBody))
     """
     if credentials.get("qop") == "auth" or credentials.get('qop') is None:
-        return H(b":".join([request['method'].encode('utf-8'), request['uri'].encode('utf-8')]), algorithm)
+        return H(b":".join([request['method'].encode(), request['uri'].encode()]), algorithm)
     elif credentials.get("qop") == "auth-int":
         for k in 'method', 'uri', 'body':
             if k not in request:
                 raise ValueError("%s required" % k)
-        A2 = b":".join([request['method'].encode('utf-8'),
-                        request['uri'].encode('utf-8'),
-                        H(request['body'], algorithm).encode('utf-8')])
+        A2 = b":".join([request['method'].encode(),
+                        request['uri'].encode(),
+                        H(request['body'], algorithm).encode()])
         return H(A2, algorithm)
     raise ValueError
 
@@ -333,20 +333,20 @@ def response(credentials, password, request):
     HA2_value = HA2(credentials, request, algorithm)
     if credentials.get('qop') is None:
         response = H(b":".join([
-            HA1_value.encode('utf-8'),
-            credentials.get('nonce', '').encode('utf-8'),
-            HA2_value.encode('utf-8')
+            HA1_value.encode(),
+            credentials.get('nonce', '').encode(),
+            HA2_value.encode()
         ]), algorithm)
     elif credentials.get('qop') == 'auth' or credentials.get('qop') == 'auth-int':
         for k in 'nonce', 'nc', 'cnonce', 'qop':
             if k not in credentials:
                 raise ValueError("%s required for response H" % k)
-        response = H(b":".join([HA1_value.encode('utf-8'),
-                               credentials.get('nonce').encode('utf-8'),
-                               credentials.get('nc').encode('utf-8'),
-                               credentials.get('cnonce').encode('utf-8'),
-                               credentials.get('qop').encode('utf-8'),
-                               HA2_value.encode('utf-8')]), algorithm)
+        response = H(b":".join([HA1_value.encode(),
+                               credentials.get('nonce').encode(),
+                               credentials.get('nc').encode(),
+                               credentials.get('cnonce').encode(),
+                               credentials.get('qop').encode(),
+                               HA2_value.encode()]), algorithm)
     else:
         raise ValueError("qop value are wrong")
 
@@ -403,12 +403,12 @@ def __parse_request_range(range_header_text):
 
     try:
         right = int(components[1])
-    except:
+    except (ValueError, TypeError):
         pass
 
     try:
         left = int(components[0])
-    except:
+    except (ValueError, TypeError):
         pass
 
     return left, right
@@ -436,7 +436,7 @@ def parse_multi_value_header(header_str):
     if header_str:
         parts = header_str.split(',')
         for part in parts:
-            match = re.search('\s*(W/)?\"?([^"]*)\"?\s*', part)
+            match = re.search(r'\s*(W/)?\"?([^"]*)\"?\s*', part)
             if match is not None:
                 parsed_parts.append(match.group(2))
     return parsed_parts

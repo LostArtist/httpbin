@@ -174,7 +174,7 @@ if os.environ.get("BUGSNAG_API_KEY") is not None:
             ignore_classes=["werkzeug.exceptions.NotFound"],
         )
         bugsnag.flask.handle_exceptions(app)
-    except:
+    except (ValueError, TypeError):
         app.logger.warning("Unable to initialize Bugsnag exception handling.")
 
 # -----------

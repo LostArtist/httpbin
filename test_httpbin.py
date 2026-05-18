@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 import os
 import base64
 import unittest
@@ -33,7 +32,7 @@ def _setenv(key, value):
 
 def _string_to_base64(string):
     """Encodes string to utf-8 and then base64"""
-    utf8_encoded = string.encode('utf-8')
+    utf8_encoded = string.encode()
     return base64.urlsafe_b64encode(utf8_encoded)
 
 def _hash(data, algorithm):
@@ -69,12 +68,12 @@ def _make_digest_auth_header(username, password, method, uri, nonce,
     assert algorithm in ('MD5', 'SHA-256', 'SHA-512', None)
 
     a1 = ':'.join([username, realm or '', password])
-    ha1 = _hash(a1.encode('utf-8'), algorithm)
+    ha1 = _hash(a1.encode(), algorithm)
 
     a2 = ':'.join([method, uri])
     if qop == 'auth-int':
         a2 = ':'.join([a2, _hash(body or b'', algorithm)])
-    ha2 = _hash(a2.encode('utf-8'), algorithm)
+    ha2 = _hash(a2.encode(), algorithm)
 
     a3 = ':'.join([ha1, nonce])
     if qop in ('auth', 'auth-int'):
@@ -83,7 +82,7 @@ def _make_digest_auth_header(username, password, method, uri, nonce,
         a3 = ':'.join([a3, nc, cnonce, qop])
 
     a3 = ':'.join([a3, ha2])
-    auth_response = _hash(a3.encode('utf-8'), algorithm)
+    auth_response = _hash(a3.encode(), algorithm)
 
     auth_header = \
         'Digest username="{0}", response="{1}", uri="{2}", nonce="{3}"'\
@@ -191,7 +190,7 @@ class HttpbinTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_post_body_unicode(self):
-        response = self.app.post('/post', data=u'оживлённым'.encode('utf-8'))
+        response = self.app.post('/post', data=u'оживлённым'.encode())
         self.assertEqual(json.loads(response.data.decode('utf-8'))['data'], u'оживлённым')
 
     def test_post_file_with_missing_content_type_header(self):
