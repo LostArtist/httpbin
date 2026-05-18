@@ -275,7 +275,7 @@ def H(data, algorithm):
     elif algorithm == 'SHA-512':
         return sha512(data).hexdigest()
     else:
-        return md5(data).hexdigest()
+        return md5(data, usedforsecurity=False).hexdigest()
 
 
 def HA1(realm, username, password, algorithm):

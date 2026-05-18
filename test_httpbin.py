@@ -44,7 +44,7 @@ def _hash(data, algorithm):
     elif algorithm == 'SHA-512':
         return sha512(data).hexdigest()
     else:
-        return md5(data).hexdigest()
+        return md5(data, usedforsecurity=False).hexdigest()
 
 def _make_digest_auth_header(username, password, method, uri, nonce,
                              realm=None, opaque=None, algorithm=None,
