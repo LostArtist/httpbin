@@ -186,6 +186,11 @@ jobs:
           cache-to: type=gha,mode=max
           provenance: true
           sbom: true
+          
+      - name: Verify pushed image tags
+        run: |
+          echo "Tags pushed: ${{ steps.meta.outputs.tags }}"
+          echo "Digest: ${{ steps.build.outputs.digest }}"    
 
 # security scan
 
