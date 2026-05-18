@@ -5,14 +5,14 @@ httpbin.core
 This module provides the core HttpBin experience.
 """
 
+import argparse
 import base64
 import json
 import os
 import random
 import time
 import uuid
-import argparse
-
+from flasgger import Swagger, NO_SANITIZER
 from flask import (
     Flask,
     Response,
@@ -25,11 +25,10 @@ from flask import (
     abort,
 )
 from six.moves import range as xrange
-from werkzeug.datastructures import WWWAuthenticate, MultiDict
+from werkzeug.datastructures import MultiDict
 from werkzeug.http import http_date
-from werkzeug.wrappers import BaseResponse
 from werkzeug.http import parse_authorization_header
-from flasgger import Swagger, NO_SANITIZER
+from werkzeug.wrappers import BaseResponse
 
 from . import filters
 from .helpers import (
@@ -40,15 +39,14 @@ from .helpers import (
     check_basic_auth,
     check_digest_auth,
     secure_cookie,
-    H,
     ROBOT_TXT,
     ANGRY_ASCII,
     parse_multi_value_header,
     next_stale_after_value,
     digest_challenge_response,
 )
-from .utils import weighted_choice
 from .structures import CaseInsensitiveDict
+from .utils import weighted_choice
 
 with open(
     os.path.join(os.path.realpath(os.path.dirname(__file__)), "VERSION")

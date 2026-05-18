@@ -8,7 +8,6 @@ import six
 import json
 from werkzeug.http import parse_dict_header
 from hashlib import md5, sha256, sha512
-from six import BytesIO
 
 import httpbin
 from httpbin.helpers import parse_multi_value_header
