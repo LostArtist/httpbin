@@ -30,7 +30,6 @@ from flask import (
 from six.moves import range as xrange
 from werkzeug.datastructures import MultiDict
 from werkzeug.http import http_date, parse_authorization_header
-from werkzeug.wrappers import Response
 
 from . import filters
 from .helpers import (
@@ -71,9 +70,6 @@ def jsonify(*args, **kwargs):
         response.data += b"\n"
     return response
 
-
-# Prevent WSGI from correcting the casing of the Location header
-Response.autocorrect_location_header = False
 
 # Find the correct template folder when running from a different location
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")

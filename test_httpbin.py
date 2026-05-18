@@ -1,13 +1,13 @@
 #!/usr/bin/env python
-import os
 import base64
-import unittest
 import contextlib
-import six
 import json
-from werkzeug.http import parse_dict_header
+import os
+import unittest
 from hashlib import md5, sha256, sha512
-from six import BytesIO
+
+import six
+from werkzeug.http import parse_dict_header
 
 import httpbin
 from httpbin.helpers import parse_multi_value_header
@@ -86,23 +86,22 @@ def _make_digest_auth_header(username, password, method, uri, nonce,
     auth_response = _hash(a3.encode('utf-8'), algorithm)
 
     auth_header = \
-        'Digest username="{0}", response="{1}", uri="{2}", nonce="{3}"'\
-            .format(username, auth_response, uri, nonce)
+        f'Digest username="{username}", response="{auth_response}", uri="{uri}", nonce="{nonce}"'
 
     # 'realm' and 'opaque' should be returned unchanged, even if empty
-    if realm != None:
-        auth_header += ', realm="{0}"'.format(realm)
-    if opaque != None:
-        auth_header += ', opaque="{0}"'.format(opaque)
+    if realm is not None:
+        auth_header += f', realm="{realm}"'
+    if opaque is not None:
+        auth_header += f', opaque="{opaque}"'
 
     if algorithm:
-        auth_header += ', algorithm="{0}"'.format(algorithm)
+        auth_header += f', algorithm="{algorithm}"'
     if cnonce:
-        auth_header += ', cnonce="{0}"'.format(cnonce)
+        auth_header += f', cnonce="{cnonce}"'
     if nc:
-        auth_header += ', nc={0}'.format(nc)
+        auth_header += f', nc={nc}'
     if qop:
-        auth_header += ', qop={0}'.format(qop)
+        auth_header += f', qop={qop}'
 
     return auth_header
 
@@ -113,10 +112,10 @@ class HttpbinTestCase(unittest.TestCase):
         httpbin.app.debug = True
         self.app = httpbin.app.test_client()
 
-    def test_index(self):   
+    def test_index(self):
         response = self.app.get('/', headers={'User-Agent': 'test'})
         self.assertEqual(response.status_code, 200)
- 
+
     def get_data(self, response):
         if 'get_data' in dir(response):
             return response.get_data()
@@ -167,7 +166,7 @@ class HttpbinTestCase(unittest.TestCase):
         self.assertTrue(response.data.endswith(b'\n'))
 
     def test_base64(self):
-        greeting = u'Здравствуй, мир!'
+        greeting = 'Здравствуй, мир!'
         b64_encoded = _string_to_base64(greeting)
         response = self.app.get(b'/base64/' + b64_encoded)
         content = response.data.decode('utf-8')
@@ -191,8 +190,8 @@ class HttpbinTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_post_body_unicode(self):
-        response = self.app.post('/post', data=u'оживлённым'.encode('utf-8'))
-        self.assertEqual(json.loads(response.data.decode('utf-8'))['data'], u'оживлённым')
+        response = self.app.post('/post', data='оживлённым'.encode())
+        self.assertEqual(json.loads(response.data.decode('utf-8'))['data'], 'оживлённым')
 
     def test_post_file_with_missing_content_type_header(self):
         # I built up the form data manually here because I couldn't find a way
@@ -388,7 +387,7 @@ class HttpbinTestCase(unittest.TestCase):
         authorized_response, nonce = self._test_digest_response_for_auth_request(header, username, password, qop, uri, body)
         self.assertEqual(authorized_response.status_code, 200)
 
-        if None == stale_after :
+        if stale_after is None :
             return
 
         # test stale after scenerio
@@ -407,11 +406,11 @@ class HttpbinTestCase(unittest.TestCase):
         return unauthorized_response
 
     def _digest_auth_create_uri(self, username, password, qop, algorithm, stale_after):
-        uri = '/digest-auth/{0}/{1}/{2}'.format(qop or 'wrong-qop', username, password)
+        uri = f'/digest-auth/{0}/{1}/{2}: {qop or 'wrong - qop', username, password}'
         if algorithm:
             uri += '/' + algorithm
         if stale_after:
-            uri += '/{0}'.format(stale_after)
+            uri += f'/{stale_after}'
         return uri
 
     def _digest_auth_stale_after_check(self, header, username, password, uri, body, qop, stale_after):
@@ -438,7 +437,7 @@ class HttpbinTestCase(unittest.TestCase):
             self.assertIn(qop, [x.strip() for x in d['qop'].split(',')], 'Challenge should contains expected qop')
         algorithm = d['algorithm']
 
-        cnonce, nc = (_hash(os.urandom(10), "MD5"), '{:08}'.format(nc)) if qop in ('auth', 'auth-int') else (None, None)
+        cnonce, nc = (_hash(os.urandom(10), "MD5"), f'{nc:08}') if qop in ('auth', 'auth-int') else (None, None)
 
         auth_header = _make_digest_auth_header(
             username, password, 'GET', uri, nonce, realm, opaque, algorithm, qop, cnonce, nc, body)
@@ -491,7 +490,7 @@ class HttpbinTestCase(unittest.TestCase):
 
     def test_drip_with_invalid_numbytes(self):
         for bad_num in -1, 0:
-            uri = '/drip?numbytes={0}&duration=2&delay=1'.format(bad_num)
+            uri = f'/drip?numbytes={bad_num}&duration=2&delay=1'
             response = self.app.get(uri)
             self.assertEqual(response.status_code, 400)
 
@@ -660,7 +659,7 @@ class HttpbinTestCase(unittest.TestCase):
         self.assertEqual(response.headers.get('Content-range'), 'bytes 10-24/100')
         self.assertEqual(response.headers.get('Accept-ranges'), 'bytes')
         self.assertEqual(response.headers.get('Content-Length'), '15')
-        self.assertEqual(self.get_data(response), 'klmnopqrstuvwxy'.encode('utf8'))
+        self.assertEqual(self.get_data(response), b'klmnopqrstuvwxy')
 
     def test_request_range_first_15_bytes(self):
         response = self.app.get(
@@ -670,7 +669,7 @@ class HttpbinTestCase(unittest.TestCase):
 
         self.assertEqual(response.status_code, 206)
         self.assertEqual(response.headers.get('ETag'), 'range1000')
-        self.assertEqual(self.get_data(response), 'abcdefghijklmnop'.encode('utf8'))
+        self.assertEqual(self.get_data(response), b'abcdefghijklmnop')
         self.assertEqual(response.headers.get('Content-range'), 'bytes 0-15/1000')
 
     def test_request_range_open_ended_last_6_bytes(self):
@@ -681,7 +680,7 @@ class HttpbinTestCase(unittest.TestCase):
 
         self.assertEqual(response.status_code, 206)
         self.assertEqual(response.headers.get('ETag'), 'range26')
-        self.assertEqual(self.get_data(response), 'uvwxyz'.encode('utf8'))
+        self.assertEqual(self.get_data(response), b'uvwxyz')
         self.assertEqual(response.headers.get('Content-range'), 'bytes 20-25/26')
         self.assertEqual(response.headers.get('Content-Length'), '6')
 
@@ -693,7 +692,7 @@ class HttpbinTestCase(unittest.TestCase):
 
         self.assertEqual(response.status_code, 206)
         self.assertEqual(response.headers.get('ETag'), 'range26')
-        self.assertEqual(self.get_data(response), 'vwxyz'.encode('utf8'))
+        self.assertEqual(self.get_data(response), b'vwxyz')
         self.assertEqual(response.headers.get('Content-range'), 'bytes 21-25/26')
         self.assertEqual(response.headers.get('Content-Length'), '5')
 
