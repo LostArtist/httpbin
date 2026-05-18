@@ -48,7 +48,7 @@ spec:
 
       containers:
         - name: httpbin
-          image: ghcr.io/LostArtist/httpbin:latest
+          image: ghcr.io/lostartist/httpbin:latest
           imagePullPolicy: Always
           ports:
             - name: http
