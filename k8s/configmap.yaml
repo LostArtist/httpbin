@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: httpbin-config
+  namespace: httpbin
+  labels:
+    app.kubernetes.io/name: httpbin
+    app.kubernetes.io/component: config
+data:
+  HTTPBIN_TRACKING_CODE: "TRACK-20240101-PROD"

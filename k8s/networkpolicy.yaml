@@ -1,0 +1,27 @@
+# policy 1: default deny all ingress
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy 
+metadata:
+  name: default-deny-ingress
+  namespace: httpbin
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+
+# policy 2: allow ingress on port 8080 to httpbin pods
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-httpbin-ingress
+  namespace: httpbin
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: httpbin
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 8080
