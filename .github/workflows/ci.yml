@@ -22,29 +22,28 @@ jobs:
 # linter
 
   lint:
-  name: Lint (ruff)
-  runs-on: ubuntu-latest
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-  steps:
-    - name: Checkout source
-      uses: actions/checkout@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.12"
+      - name: Install ruff
+        run: pip install ruff==0.4.4
+        
+      - name: Ruff format
+        run: ruff format .
 
-    - name: Install ruff
-      run: pip install ruff==0.4.4
+      - name: Ruff fix
+        run: ruff check . --fix
 
-    - name: Ruff fix
-      run: ruff check . --fix
-
-    - name: Ruff format
-      run: ruff format .
-
-    - name: Run ruff linter
-      run: ruff check . --output-format=github
+      - name: Run ruff linter (non-blocking report)
+        run: ruff check . --output-format=github 
 
 # unit tests
 
