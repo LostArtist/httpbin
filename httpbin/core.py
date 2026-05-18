@@ -29,7 +29,8 @@ from flask import (
 )
 from six.moves import range as xrange
 from werkzeug.datastructures import MultiDict
-from werkzeug.http import http_date, parse_authorization_header
+from werkzeug.http import http_date
+from werkzeug.datastructures import Authorization
 
 from . import filters
 from .helpers import (
@@ -1110,7 +1111,7 @@ def digest_auth(qop=None, user="user", passwd="passwd", algorithm="MD5", stale_a
     authorization = request.headers.get("Authorization")
     credentials = None
     if authorization:
-        credentials = parse_authorization_header(authorization)
+        credentials = Authorization.from_header(authorization)
 
     if (
         not authorization
