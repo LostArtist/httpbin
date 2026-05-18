@@ -593,7 +593,7 @@ class HttpbinTestCase(unittest.TestCase):
                                  content_type='application/octet-stream')
         self.assertEqual(response.status_code, 307)
         location = response.headers.get('Location')
-        self.assertEqual(some_value, '/post')
+        self.assertEqual(location, '/post')
 
     def test_redirect_absolute_param_n_higher_than_1(self):
         response = self.app.get('/redirect/5?absolute=true')
