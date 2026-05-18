@@ -37,7 +37,7 @@ jobs:
         run: pip install ruff==0.4.4
 
       - name: Run ruff linter (non-blocking report)
-        run: ruff check . --output-format=github --exit-zero
+        run: ruff check . --output-format=github
 
 # unit tests
 

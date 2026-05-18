@@ -30,7 +30,7 @@ from flask import (
 from six.moves import range as xrange
 from werkzeug.datastructures import MultiDict
 from werkzeug.http import http_date, parse_authorization_header
-from werkzeug.wrappers import BaseResponse
+from werkzeug.wrappers import Response
 
 from . import filters
 from .helpers import (
@@ -73,7 +73,7 @@ def jsonify(*args, **kwargs):
 
 
 # Prevent WSGI from correcting the casing of the Location header
-BaseResponse.autocorrect_location_header = False
+Response.autocorrect_location_header = False
 
 # Find the correct template folder when running from a different location
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
@@ -1280,7 +1280,7 @@ def decode_base64(value):
     encoded = value.encode("utf-8")  # base64 expects binary string as input
     try:
         return base64.urlsafe_b64decode(encoded).decode("utf-8")
-    except:
+    except (ValueError, TypeError):
         return "Incorrect Base64 data try: SFRUUEJJTiBpcyBhd2Vzb21l"
 
 
