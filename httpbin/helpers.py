@@ -447,13 +447,13 @@ def digest_challenge_response(app, qop, algorithm, stale=False):
     opaque = H(os.urandom(10), algorithm)
 
     auth = WWWAuthenticate("digest")
-    auth.set_digest(
-        "me@kennethreitz.com",
-        nonce,
-        opaque=opaque,
-        qop=("auth", "auth-int") if qop is None else (qop,),
-        algorithm=algorithm,
-    )
-    auth.stale = stale
+    auth["realm"] = "me@kennethreitz.com"
+    auth["nonce"] = nonce
+    auth["opaque"] = opaque
+    auth["algorithm"] = algorithm or "MD5"
+    auth["qop"] = "auth, auth-int" if qop is None else qop
+    if stale:
+        auth["stale"] = "TRUE"
+
     response.headers["WWW-Authenticate"] = auth.to_header()
     return response

@@ -168,7 +168,7 @@ class HttpbinTestCase(unittest.TestCase):
     def test_base64(self):
         greeting = 'Здравствуй, мир!'
         b64_encoded = _string_to_base64(greeting)
-        response = self.app.get(b'/base64/' + b64_encoded)
+        response = self.app.get(b'/base64/'.decode() + b64_encoded.decode())
         content = response.data.decode('utf-8')
         self.assertEqual(greeting, content)
 
@@ -592,9 +592,8 @@ class HttpbinTestCase(unittest.TestCase):
                                  data=b'\x01\x02\x03\x81\x82\x83',
                                  content_type='application/octet-stream')
         self.assertEqual(response.status_code, 307)
-        self.assertEqual(
-            response.headers.get('Location'), '/post'
-        )
+        location = response.headers.get('Location')
+        self.assertEqual(some_value, '/post')
 
     def test_redirect_absolute_param_n_higher_than_1(self):
         response = self.app.get('/redirect/5?absolute=true')
