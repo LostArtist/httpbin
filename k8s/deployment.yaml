@@ -50,7 +50,7 @@ spec:
         - name: httpbin
         # for development can be used httpbin:latest
           image: httpbin:local
-          # turned off for local testing
+          # turned off for local testing, for devops use Always
           imagePullPolicy: Never
           ports:
             - name: http
