@@ -230,3 +230,86 @@ minikube stop
 # full reset:
 minikube delete
 ```
+
+## 4. CI/CD Pipeline — Step-by-Step
+
+The pipeline is defined in `.github/workflows/ci.yml` and triggers on every push to `main` and on pull requests. All quality gate jobs run in parallel before the image is built. The pipeline will only deploy if every preceding job passes.
+
+```
+lint ────────────────────────────────────────────────────┐
+test ──────┐                                             │
+sast ──────┼── (all must pass) ──► build-and-push ──► trivy-scan ──► deploy
+dep-audit ─┘
+secret-scan ┘
+```
+
+### Job 1 — Lint (`ruff`)
+
+Runs `ruff check` and `ruff format` over all Python source files. Ruff enforces PEP 8 compliance, import ordering (standard → third-party → local), unused imports, f-string usage, and removal of unnecessary unicode/UTF-8 literals.
+
+### Job 2 — Unit Tests (`pytest`)
+
+Executes the existing `test_httpbin.py` test suite (67 tests) against Python 3.12 with all production dependencies installed. Tests cover all HTTP methods, redirect chains, digest auth, streaming, compression (gzip, brotli), CORS headers, and range requests. The job fails if any test fails or errors.
+
+### Job 3 — SAST (`bandit`)
+
+Performs AST-level static analysis of all Python source files. Bandit detects: hardcoded passwords, use of `assert` in production code, `subprocess` with `shell=True`, weak cryptographic functions (`md5`, `sha1`), SQL injection patterns, and other CWE-mapped security issues. The scan runs at medium severity and above (`-ll`).
+
+### Job 4 — Dependency Audit (`pip-audit`)
+
+Queries the OSV (Open Source Vulnerabilities) database and PyPI advisory feed against every package in `requirements.txt`. The job fails with `--strict` if any dependency has a known CVE with a published fix available. This catches vulnerable transitive dependencies before they reach the image.
+
+### Job 5 — Secret Detection (`gitleaks`)
+
+Scans the **entire commit history** (`fetch-depth: 0`) for accidentally committed secrets, API keys, tokens, private keys, and high-entropy strings. This covers all historical commits, not just the current HEAD, making it effective against secrets committed and later deleted.
+
+### Job 6 — Build & Push (`docker/build-push-action` → `ghcr.io`)
+
+Runs only after all five quality gates pass. Builds the multi-stage image using Docker Buildx with GitHub Actions layer cache, then pushes to GitHub Container Registry (`ghcr.io/lostartist/httpbin`) tagged with the short commit SHA and `latest`. SBOM and provenance attestations are generated automatically. The image name is forced to lowercase to satisfy OCI registry requirements.
+
+### Job 7 — Image Scan (`trivy`)
+
+Pulls the freshly pushed image from GHCR and scans all OS packages and Python library layers for CVEs. The pipeline **fails** on any finding with severity `HIGH` or `CRITICAL`.
+
+### Job 8 — Deploy / Validate K8s Manifests
+
+Spins up a real `kind` cluster inside the GitHub Actions runner, creates the namespace and a placeholder secret, applies all manifests from `k8s/`, and verifies the Deployment, Service, and HPA objects were created successfully. This validates manifest syntax and Kubernetes API compatibility without requiring access to a production cluster.
+
+---
+
+
+## 5. Known Issues / Trade-offs
+
+### Python 3.12 Compatibility
+
+The httpbin source code was written against Python 2.7 era dependencies. Running it on Python 3.12 required patching three categories of issues: `werkzeug.wrappers.BaseResponse` was removed in Werkzeug 2.1 (replaced with `Response`), `werkzeug.http.parse_authorization_header` was removed in Werkzeug 3.x (replaced with `Authorization.from_header()`), and `WWWAuthenticate.set_digest()` was removed in Werkzeug 2.1 (replaced with direct dict-style attribute assignment). All three patches are a minimal amount of line changes in `core.py` and `helpers.py`.
+
+### Werkzeug / Flask Version Pinning
+
+The dependency stack is pinned to Flask 3.1.3, Werkzeug 3.1.6, and Jinja2 3.1.6 — the latest patched versions for now. These are the minimum versions that resolve all CVEs reported by pip-audit while remaining compatible with the application source.
+
+### Secret Management
+
+The local development workflow creates secrets imperatively via `kubectl create secret` so that no plaintext value ever enters Git history. For a production pipeline, the correct approach is `Bitnami Sealed Secrets` or the `External Secrets Operator` integrated with HashiCorp Vault, AWS Secrets Manager, or Azure Key Vault. These are documented in the CI pipeline's deploy job as the intended production path. Such a key also lies in k8s/secret.yaml as an example.
+
+### OS-Level CVEs in Base Image
+
+The `python:3.12-slim` base image is Debian-based and periodically contains OS-level CVEs. The Dockerfile includes `apt-get upgrade` in the runtime stage to pull patched package versions directly from Debian's apt repositories.
+
+### NetworkPolicy and Kubernetes Health Probes
+
+Kubernetes liveness, readiness, and startup probes are executed by the **kubelet** running on the host network (not by a pod). A default-deny-all ingress NetworkPolicy without an explicit source selector will block probe traffic because the kubelet is not a pod and does not match any `podSelector` or `namespaceSelector`. The `allow-httpbin-ingress` policy permits traffic from any source on port 8080 (no `from:` block) to ensure probes reach the container. In production, the `from:` block should be restricted to the ingress controller's namespace.
+
+### HPA and metrics-server
+
+The HorizontalPodAutoscaler requires `metrics-server` to be running in the cluster. On minikube this is an optional addon that must be explicitly enabled: `minikube addons enable metrics-server`. If `kubectl get hpa -n httpbin` shows `TARGETS: <unknown>/70%`, wait 60 seconds for the first metrics scrape cycle to complete.
+
+### Distroless vs. python:3.12-slim
+
+The task suggests `distroless` as an option, however it lacks a shell, package manager, and writable home directory, which conflicts with gunicorn's worker heartbeat file handling and flasgger's Swagger UI template initialization. `python:3.12-slim` with explicit hardening (non-root user, `readOnlyRootFilesystem`, dropped capabilities, `apt-get upgrade`) achieves equivalent attack surface reduction while maintaining WSGI compatibility.
+
+### Production Improvements Not in Scope
+
+TLS termination via an Ingress resource with cert-manager, Prometheus/Grafana ServiceMonitor for gunicorn metrics, image tag pinned to immutable SHA digest instead of latest (recommended), External Secrets Operator integration.
+
+> **Important:** The documentation was formulated and styled with use of AI in order to avoid grammar mistakes and make it loud and clear. Except for documentation, all the work was done by hand.
