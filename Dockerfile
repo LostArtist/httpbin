@@ -49,7 +49,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
          "import urllib.request; urllib.request.urlopen('http://localhost:8080/get')"]
 
 CMD ["/opt/venv/bin/gunicorn", \
-     "--workers", "4", \
+     "--workers", "2", \
      "--bind", "0.0.0.0:8080", \
      "--access-logfile", "-", \
      "--error-logfile", "-", \

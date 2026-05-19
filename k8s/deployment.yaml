@@ -48,8 +48,10 @@ spec:
 
       containers:
         - name: httpbin
-          image: ghcr.io/lostartist/httpbin:latest
-          imagePullPolicy: Always
+        # for development can be used httpbin:latest
+          image: httpbin:local
+          # turned off for local testing
+          imagePullPolicy: Never
           ports:
             - name: http
               containerPort: 8080
@@ -89,7 +91,7 @@ spec:
           # request limit
           resources:
             requests:
-              cpu: "100m"
+              cpu: "50m"
               memory: "128Mi"
             limits:
               cpu: "500m"
@@ -120,7 +122,8 @@ spec:
             httpGet:
               path: /get
               port: http
-            failureThreshold: 10
+            initialDelaySeconds: 10
+            failureThreshold: 30
             periodSeconds: 5
 
       volumes:
